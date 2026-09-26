@@ -14,14 +14,12 @@ pacman -Syu --noconfirm   \
     fluidsynth            \
     fmt                   \
     gtksourceview5        \
-    help2man              \
     hicolor-icon-theme    \
     json-schema-validator \
     kvantum               \
     libadwaita            \
     libbacktrace          \
     libcyaml              \
-    liblo                 \
     libpanel              \
     lxqt-qtplugin         \
     onetbb                \
@@ -57,17 +55,6 @@ make fetch
 make -j$(nproc) install
 cd ../
 
-echo "Building Carla..."
-echo "---------------------------------------------------------------"
-REPO="https://github.com/falkTX/Carla"
-git clone --depth 1 "$REPO" ./Carla
-
-cd ./Carla
-make features
-make -j$(nproc) DEFAULT_QT=6 HAVE_QT4=false PREFIX=/usr
-make install
-cd ../
-
 echo "Building Zrythm dependencies..."
 echo "---------------------------------------------------------------"
 # These have no Arch package, so they are built from source and installed
@@ -99,7 +86,7 @@ build_dep magic_enum https://github.com/Neargye/magic_enum v0.9.7 -DMAGIC_ENUM_O
 build_dep gsl-lite https://github.com/gsl-lite/gsl-lite v1.0.1
 build_dep debug_assert https://github.com/foonathan/debug_assert v1.3.4
 build_dep au https://github.com/aurora-opensource/au 0.5.1 -DAU_EXCLUDE_GTEST_DEPENDENCY=ON -DBUILD_TESTING=OFF
-build_dep scn https://github.com/eliaskosunen/scnlib v4.0.1 -DSCN_TESTS=OFF -DSCN_DOCS=OFF -DSCN_EXAMPLES=OFF -DSCN_INSTALL=ON -DSCN_USE_EXTERNAL_FAST_FLOAT=OFF
+build_dep scn https://github.com/eliaskosunen/scnlib v4.0.1 -DSCN_TESTS=OFF -DSCN_DOCS=OFF -DSCN_EXAMPLES=OFF -DSCN_BENCHMARKS=OFF -DSCN_BENCHMARKS_BUILDTIME=OFF -DSCN_BENCHMARKS_BINARYSIZE=OFF -DSCN_INSTALL=ON -DSCN_USE_EXTERNAL_FAST_FLOAT=OFF
 
 # type_safe installs its targets without a namespace, but Zrythm links
 # type_safe::type_safe, so patch the export before building it
@@ -135,15 +122,15 @@ VERSION="$(git ls-remote "$REPO" HEAD | cut -c 1-9 | head -1)"
 git clone --depth 1 "$REPO" ./zrythm
 echo "$VERSION" > ~/version
 
-# The man page target runs the zrythm binary in a headless CI container,
-# where no X/Wayland display exists and libxcb-cursor is missing
-export QT_QPA_PLATFORM=offscreen
-
+# The AppImage ships neither the man page nor the shell completions, so
+# skip both targets (ZRYTHM_MANPAGE also gates the completions).
 cmake -S ./zrythm -B build \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=/usr \
     -DCMAKE_PREFIX_PATH=/usr \
     -DZRYTHM_WITH_JACK=ON \
+    -DZRYTHM_MANPAGE=OFF \
+    -DZRYTHM_SHELL_COMPLETIONS=OFF \
     -DCMAKE_MODULE_PATH="$(pwd)/cmake-shims" \
     -DCMAKE_INCLUDE_PATH=/usr/include \
     -DCMAKE_LIBRARY_PATH=/usr/lib \
